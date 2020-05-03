@@ -163,9 +163,12 @@ public abstract class BeanDefinitionReaderUtils {
 
 		// Register bean definition under primary name.
 		String beanName = definitionHolder.getBeanName();
+		//BeanDefinition是AnnotatedBeanDefinition的父类，就是前面获取到的bean得元数据信息
+		//将bd 和beanName存到DefaultListableBeanFactory的Map<String, BeanDefinition> beanDefinitionMap 当中去
+		//同时将beanName存到List<String> beanDefinitionNames
 		registry.registerBeanDefinition(beanName, definitionHolder.getBeanDefinition());
 
-		// Register aliases for bean name, if any.
+		//处理别名 Register aliases for bean name, if any.
 		String[] aliases = definitionHolder.getAliases();
 		if (aliases != null) {
 			for (String alias : aliases) {

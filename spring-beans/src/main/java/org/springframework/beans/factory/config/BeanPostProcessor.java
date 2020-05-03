@@ -20,6 +20,36 @@ import org.springframework.beans.BeansException;
 import org.springframework.lang.Nullable;
 
 /**
+ * BeanPostProcessor是spring框架的通过一个扩展类点（不止一个）
+ * 通过实现BeanPostProcessor接口，程序员就可查收bean实例化的过程，从而减轻了beanFacotry的负担
+ * 值得说明的是这个接口可以设置多个，会形成一个列表，然后依次执行
+ * (但是spring写的后置处理器都是手动加入的)
+ * 比如AOP就是在bean实例后期间将切面逻辑织入bean实例中的
+ * AOP也是通过BeanPostProcessor和IOC容器建立起了联系
+ * (由spring提供的默认的PostPorcessor，spring提供了很多默认的PostProcessor，)
+ * BeanPostProcessor可以把动态代理和IOC、AOP结合起来使用
+ *
+ * 查看类的关系图可以知道spring提供了一下的默认实现，解释几个常用的
+ * 1.ApplicationContextAwareProcessor(acap)
+ * 	 acap后置处理器的作用是，当应用程序定义Bean实现ApplicationContextAware接口时注入ApplicationContext对象
+ *	 当然这是他的第一个作用，他还有其他的作用，
+ *
+ * 2.InitDestroyAnnotationBeanPostProcessor
+ * 	 用来处理自定义的初始化方法和销毁方法
+ * 	 Spring中提供了3中自定义初始化和销毁方法分别是
+ * 	 一：通过@Bean指定Init-method和destory-method属性
+ * 	 二：Bean实现InitlializingBean接口和实现DisposableBean
+ * 	 三：@PostConstruct:@PreDestory
+ * 	 为什么spring通过这三种方法都能完成对bean生命周期的回调呢？可以参考IintDestroyAnnotationBeanPostProcessor的源码来解释
+ *
+ * 3.InstrantistionAwareBeanPostProcessor
+ * 4.CommonAnnotationBeanPostProcessor
+ * 5.AutowiredAnnotationBeanPostProcessor
+ * 6.RequiredAnnotationBeanPostProcessor
+ * 7.BeanVlidationPostProcessor
+ * 8.AbstractAutoPorxyCreator
+ * ....
+ *
  * Factory hook that allows for custom modification of new bean instances,
  * e.g. checking for marker interfaces or wrapping them with proxies.
  *
@@ -43,6 +73,7 @@ import org.springframework.lang.Nullable;
 public interface BeanPostProcessor {
 
 	/**
+	 * 在bean的初始化之前执行
 	 * Apply this BeanPostProcessor to the given new bean instance <i>before</i> any bean
 	 * initialization callbacks (like InitializingBean's {@code afterPropertiesSet}
 	 * or a custom init-method). The bean will already be populated with property values.
@@ -61,6 +92,7 @@ public interface BeanPostProcessor {
 	}
 
 	/**
+	 * 在bean初始化之后执行
 	 * Apply this BeanPostProcessor to the given new bean instance <i>after</i> any bean
 	 * initialization callbacks (like InitializingBean's {@code afterPropertiesSet}
 	 * or a custom init-method). The bean will already be populated with property values.

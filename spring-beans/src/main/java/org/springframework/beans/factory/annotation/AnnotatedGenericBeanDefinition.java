@@ -43,8 +43,10 @@ import org.springframework.util.Assert;
 @SuppressWarnings("serial")
 public class AnnotatedGenericBeanDefinition extends GenericBeanDefinition implements AnnotatedBeanDefinition {
 
+	//构造函数初始化一个StandardAnnotationMetadata() 里面的annotations属性是形参beanClass的getAnnotations
 	private final AnnotationMetadata metadata;
 
+	//放
 	@Nullable
 	private MethodMetadata factoryMethodMetadata;
 

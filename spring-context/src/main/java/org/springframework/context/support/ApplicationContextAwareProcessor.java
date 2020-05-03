@@ -35,6 +35,10 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.StringValueResolver;
 
 /**
+ * 这个类说起来相当复杂
+ * 他实现了BeanPostProcessor后置处理器接口，可以在bean的生成前后执行postProcessBeforeInitialization和postProcessAfterInitialization
+ *
+ *
  * {@link org.springframework.beans.factory.config.BeanPostProcessor}
  * implementation that passes the ApplicationContext to beans that
  * implement the {@link EnvironmentAware}, {@link EmbeddedValueResolverAware},
@@ -93,6 +97,9 @@ class ApplicationContextAwareProcessor implements BeanPostProcessor {
 			}, acc);
 		}
 		else {
+			/**
+			 * 前面的代码是判断传递进来的bean是不是一些特定的接口
+			 */
 			invokeAwareInterfaces(bean);
 		}
 
@@ -116,6 +123,8 @@ class ApplicationContextAwareProcessor implements BeanPostProcessor {
 			if (bean instanceof MessageSourceAware) {
 				((MessageSourceAware) bean).setMessageSource(this.applicationContext);
 			}
+			//spring帮你set一个applicationContext对象
+			//所以当我们自己的一个bean实现了ApplicationContextAware接口，在这里的setApplicationContext就为这个bean提供了applictionContext
 			if (bean instanceof ApplicationContextAware) {
 				((ApplicationContextAware) bean).setApplicationContext(this.applicationContext);
 			}

@@ -53,16 +53,35 @@ import org.springframework.util.Assert;
  */
 public class AnnotationConfigApplicationContext extends GenericApplicationContext implements AnnotationConfigRegistry {
 
+	/**
+	 * 父类的构造方法
+	 * 这个类顾名思义是一个reader,一个读取器
+	 * 读取什么？还是顾名思义AnnotationBeanDefinition意思是读取一个加了注解的bean
+	 * 这个类要在构造方法里实例化的
+	 */
 	private final AnnotatedBeanDefinitionReader reader;
 
+	/**
+	 * 顾名思义，这是一个扫描器，扫描所有加了注解的bean
+	 * 这个类在构造方法里实例化的
+	 */
 	private final ClassPathBeanDefinitionScanner scanner;
 
 
 	/**
+	 * 初始化一个bean的读取和扫描器
+	 * 读取器和扫描器就是上面的两个成员变量
+	 * 默认构造函数，如果直接调用这个默认构造方法，需要在稍后通过调用其register()去注册配置类(javaconfig),并调用refresh()方法刷新容器
+	 * 触发容器对注解Bean的载入，解析和注册过程
+	 * 这种使用过程在练习@profile注解时使用过
 	 * Create a new AnnotationConfigApplicationContext that needs to be populated
 	 * through {@link #register} calls and then manually {@linkplain #refresh refreshed}.
 	 */
 	public AnnotationConfigApplicationContext() {
+		/**
+		 * 创建一个读取注解的Bean定义读取器
+		 * 什么是Bean定义？BeanDefinition
+		 */
 		this.reader = new AnnotatedBeanDefinitionReader(this);
 		this.scanner = new ClassPathBeanDefinitionScanner(this);
 	}
@@ -78,12 +97,16 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	}
 
 	/**
+	 * 这个构造方法需要传入一个被javacofig注解了的配置类
+	 * 然后会把这个被注解了javaconfig的类通过注解读取器读取后继而解析
 	 * Create a new AnnotationConfigApplicationContext, deriving bean definitions
 	 * from the given component classes and automatically refreshing the context.
 	 * @param componentClasses one or more component classes &mdash; for example,
 	 * {@link Configuration @Configuration} classes
 	 */
 	public AnnotationConfigApplicationContext(Class<?>... componentClasses) {
+		//这里由于有父类，会先调用父类的构造方法，然后才会调用自己的构造方法
+		//在自己的构造方法中初始一个读取器和扫描器
 		this();
 		register(componentClasses);
 		refresh();
@@ -146,6 +169,13 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	//---------------------------------------------------------------------
 
 	/**
+	 * 注册单个bean 当到 DefaultListableBeanFactory的map当中
+	 * 比如有新加的类可以用这个方法
+	 * 但是注册完以后需要手动调用refresh()方法触发容器解析注解
+	 *
+	 * 这里的参数componentClasses分为两种
+	 * 1.注册一个配置类
+	 * 2.单独注册一个bean
 	 * Register one or more component classes to be processed.
 	 * <p>Note that {@link #refresh()} must be called in order for the context
 	 * to fully process the new classes.
