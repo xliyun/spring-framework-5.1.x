@@ -148,24 +148,35 @@ public abstract class AnnotationConfigUtils {
 	public static Set<BeanDefinitionHolder> registerAnnotationConfigProcessors(
 			BeanDefinitionRegistry registry, @Nullable Object source) {
 
+		//获取到bean工厂
 		DefaultListableBeanFactory beanFactory = unwrapDefaultListableBeanFactory(registry);
 		if (beanFactory != null) {
 			if (!(beanFactory.getDependencyComparator() instanceof AnnotationAwareOrderComparator)) {
+				//如果工厂里负责排序的成员变量是空的，AnnotationAwareOrderComparator主要能解析@Order注解和@Priority
 				beanFactory.setDependencyComparator(AnnotationAwareOrderComparator.INSTANCE);
 			}
 			if (!(beanFactory.getAutowireCandidateResolver() instanceof ContextAnnotationAutowireCandidateResolver)) {
+				//ContextAnnotationAutowireCandidateResolver提供处理延迟加载的功能
 				beanFactory.setAutowireCandidateResolver(new ContextAnnotationAutowireCandidateResolver());
 			}
 		}
 
+		//BeanDefinitionHolder就是beanDefinition和beanName的组合，和DefaultListableBeanFactory工厂里的map没啥区别，这里可能是为了方便传参吧
 		Set<BeanDefinitionHolder> beanDefs = new LinkedHashSet<>(8);
-
+		//BeanDefinition的注册，这里很重要，需要理解注册每个bean的类型
 		if (!registry.containsBeanDefinition(CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME)) {
+			//需要注意的是ConfigurationClassPostProcess的类型是BeanDefinitionRegistryPostProcessor
+			//而BeanDefinitionRegistryPostProcessor最终实现BeanFactoryPostProcessor这个接口
+
+			//将ConfigurationClassPostProcessor变成Root bd
 			RootBeanDefinition def = new RootBeanDefinition(ConfigurationClassPostProcessor.class);
 			def.setSource(source);
+			//registerPostProcessor，通过registry.registerBeanDefinition(beanName, definition)放到map中，
+			// 然后返回BeanDefinitionHolder(bd-beanName)
 			beanDefs.add(registerPostProcessor(registry, def, CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME));
 		}
 
+		//下面这些跟上面的逻辑一样，就是往DefaultListableBeanFactory工厂里的map里注册各种类
 		if (!registry.containsBeanDefinition(AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME)) {
 			RootBeanDefinition def = new RootBeanDefinition(AutowiredAnnotationBeanPostProcessor.class);
 			def.setSource(source);

@@ -251,7 +251,7 @@ public class AnnotatedBeanDefinitionReader {
 		 * 处理类当中的通用注解
 		 * 分析源码可以知道他主要处理
 		 * lazy DependsOn Primary Role等等注解
-		 * 处理完成之后processCommonDefinitionAnnotations中依然是把他添加到数据结构当中
+		 * 处理完成之后processCommonDefinitionAnnotations把这些注解的值加到bd的变量里面
 		 */
 		AnnotationConfigUtils.processCommonDefinitionAnnotations(abd);
 
@@ -299,9 +299,8 @@ public class AnnotatedBeanDefinitionReader {
 		 * registry就是AnnotationConfigApplicationContext
 		 * AnnotationConfigApplicationContext在初始化的时候通过调用父类构造的方法
 		 * 实例化了一个DefaultListableBeanFactory
-		 * registerBeanDefination里面就是把definitionHolder这个数据结构包含的信息注册到
-		 * DefaultListableBeanFacotry这个工厂
-		 * DefaultListableBeanFacotry这个类有个
+		 * registerBeanDefination里面通过registry.registerBeanDefinition(beanName, definitionHolder.getBeanDefinition());
+		 * 注册到DefaultListableBeanFacotry这个工厂里的map里
 		 */
 		BeanDefinitionReaderUtils.registerBeanDefinition(definitionHolder, this.registry);
 	}

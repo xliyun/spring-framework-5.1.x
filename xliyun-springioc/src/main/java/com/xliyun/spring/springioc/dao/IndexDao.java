@@ -15,7 +15,7 @@ import javax.annotation.PostConstruct;
  * @date: 2020-05-02 11:50
  */
 @Repository
-@Scope("prototype")
+@Scope("singleton")
 @Description("dao")
 public class IndexDao implements ApplicationContextAware {
 

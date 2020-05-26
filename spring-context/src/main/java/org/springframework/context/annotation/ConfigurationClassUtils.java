@@ -87,15 +87,21 @@ abstract class ConfigurationClassUtils {
 		}
 
 		AnnotationMetadata metadata;
+		//不一样的bd metadata元数据获取方式也不一样，比如注解类型的bd，元数据都是放到注解中
+		//判断beanDef是否是注解类型bd，调试到这里的注解bd只有appConfig这个注解，其他的都是professor这些我们自定义的bd,是RootBeanDefinition类型的
 		if (beanDef instanceof AnnotatedBeanDefinition &&
 				className.equals(((AnnotatedBeanDefinition) beanDef).getMetadata().getClassName())) {
 			// Can reuse the pre-parsed metadata from the given BeanDefinition...
+			//加了注解的bd，信息都会存在注解里面，所以通过getMetadata()获取数据
 			metadata = ((AnnotatedBeanDefinition) beanDef).getMetadata();
 		}
 		else if (beanDef instanceof AbstractBeanDefinition && ((AbstractBeanDefinition) beanDef).hasBeanClass()) {
 			// Check already loaded Class if present...
 			// since we possibly can't even load the class file for this Class.
 			Class<?> beanClass = ((AbstractBeanDefinition) beanDef).getBeanClass();
+			//不是注解类型的bd的元数据获取方式
+			//如果BeanDefinition 是 AbstractBeanDefinition的实例，并且beanDef有beanClass属性存在
+			//则实例化StandardAnnotationMetadata
 			metadata = new StandardAnnotationMetadata(beanClass, true);
 		}
 		else {
@@ -112,10 +118,13 @@ abstract class ConfigurationClassUtils {
 			}
 		}
 
+		//isFullConfigurationCandidate通过元数据判断是否加了@Configuration 等注解，然后将处理标志变为已处理
 		if (isFullConfigurationCandidate(metadata)) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
 		}
+		//isLiteConfigurationCandidate通过元数据判断是否加了@Component @ComponentScan @Import @ImportResource等注解 等注解，然后将处理标志变为已处理
 		else if (isLiteConfigurationCandidate(metadata)) {
+			//setAttribute("configurationClass","lite")
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_LITE);
 		}
 		else {
@@ -168,6 +177,7 @@ abstract class ConfigurationClassUtils {
 		}
 
 		// Any of the typical annotations found?
+		//candidateIndicators是一个set 用来判断是否加了@Component @ComponentScan @Import @ImportResource等注解
 		for (String indicator : candidateIndicators) {
 			if (metadata.isAnnotated(indicator)) {
 				return true;

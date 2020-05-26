@@ -22,7 +22,7 @@ import org.springframework.lang.Nullable;
 /**
  * BeanPostProcessor是spring框架的通过一个扩展类点（不止一个）
  * 通过实现BeanPostProcessor接口，程序员就可查收bean实例化的过程，从而减轻了beanFacotry的负担
- * 值得说明的是这个接口可以设置多个，会形成一个列表，然后依次执行
+ * 这个接口可以设置多个，会在beanFacotry里面维护一个list，bean实例化过程中会依次
  * (但是spring写的后置处理器都是手动加入的)
  * 比如AOP就是在bean实例后期间将切面逻辑织入bean实例中的
  * AOP也是通过BeanPostProcessor和IOC容器建立起了联系

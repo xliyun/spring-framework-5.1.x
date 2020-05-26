@@ -1,0 +1,65 @@
+一、AnnotationConfigApplicationContext annotationConfigApplicationContext =new AnnotationConfigApplicationContext();
+    1.先初始化AnnotationConfigApplicationContext 的父类GenericApplicationContext(),父类构造函数赋值了一个DefaultListableBeanFactory()
+    public GenericApplicationContext() {
+    		this.beanFactory = new DefaultListableBeanFactory();
+    	}
+
+    2.DefaultListableBeanFactory里面最重要的是两个数据结构，一个map，用来放由beanName-bean转换成的bd，一个list用来放beanName，一个BeanPostProcessor放后置处理器的list
+         private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>(256);
+         private volatile List<String> beanDefinitionNames = new ArrayList<>(256);
+
+    3.然后到先初始化AnnotationConfigApplicationContext的构造函数，实例化一个注解读取器和bean扫描器
+    	  this.reader = new AnnotatedBeanDefinitionReader(this);//只能读取加了注解的类
+    	  this.scanner = new ClassPathBeanDefinitionScanner(this);
+
+二、AnnotatedBeanDefinitionReader初始化
+    1.AnnotationConfigApplicationContext就相当于一个注册器，先给AnnotatedBeanDefinitionReader的registry赋值
+    this.registry = registry;
+
+    2.然后通过AnnotationConfigUtils注册一些bd
+    AnnotationConfigUtils.registerAnnotationConfigProcessors(this.registry);
+
+    3.AnnotationConfigUtils.registerAnnotationConfigProcessors先给工厂赋一些值
+		//获取到bean工厂
+		DefaultListableBeanFactory beanFactory = unwrapDefaultListableBeanFactory(registry);
+		if (beanFactory != null) {
+			if (!(beanFactory.getDependencyComparator() instanceof AnnotationAwareOrderComparator)) {
+				//如果工厂里负责排序的成员变量是空的，AnnotationAwareOrderComparator主要能解析@Order注解和@Priority
+				beanFactory.setDependencyComparator(AnnotationAwareOrderComparator.INSTANCE);
+			}
+			if (!(beanFactory.getAutowireCandidateResolver() instanceof ContextAnnotationAutowireCandidateResolver)) {
+				//ContextAnnotationAutowireCandidateResolver提供处理延迟加载的功能
+				beanFactory.setAutowireCandidateResolver(new ContextAnnotationAutowireCandidateResolver());
+			}
+		}
+
+    4.将一些要用到的bean转为bd，然后存到工厂的map中去,这里初始化的是srping默认需要的6个后置处理器
+    ----这里注册的ConfigurationClassPostProcessor.class转换的bd会在后面refresh().invokeBeanFactoryPostProcessors()里面用到
+    ----invokeBeanFactoryPostProcessors()作用是在spring的beanFactory初始化过程中去做一些事情，
+    ----委托实现了BeanDefinitionRegistryPostProcessor或者BeanFactoryPostProcessor接口的类来做这些事，有自定义的，也有spring内部的
+    ----其中ConfigurationClassPostProcessor就是spring内部的一个的BeanDefinitionRegistryPostProcessor
+    ----因为如果不添加这里就没办法委托ConfigurationClassPostProcessor做一些事情
+		//BeanDefinitionHolder就是beanDefinition和beanName的组合，和DefaultListableBeanFactory工厂里的map没啥区别，这里可能是为了方便传参吧
+		Set<BeanDefinitionHolder> beanDefs = new LinkedHashSet<>(8);
+		//BeanDefinition的注册，这里很重要，需要理解注册每个bean的类型
+		if (!registry.containsBeanDefinition(CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME)) {
+			//需要注意的是ConfigurationClassPostProcess的类型是BeanDefinitionRegistryPostProcessor
+			//而BeanDefinitionRegistryPostProcessor最终实现BeanFactoryPostProcessor这个接口
+
+			//将ConfigurationClassPostProcessor变成Root bd
+			RootBeanDefinition def = new RootBeanDefinition(ConfigurationClassPostProcessor.class);
+			def.setSource(source);
+			//registerPostProcessor，通过registry.registerBeanDefinition(beanName, definition)放到map中，
+			// 然后返回BeanDefinitionHolder(bd-beanName)
+			beanDefs.add(registerPostProcessor(registry, def, CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME));
+		}
+
+三、this.scanner = new ClassPathBeanDefinitionScanner(this);
+
+四、annotationConfigApplicationContext.register(AppConfig.class);注册一个配置类
+    1.AnnotationConfigApplicationContext调用上面初始化的reader去注册这个配置类
+    this.reader.register(componentClasses);
+
+    2.最后调用到doRegisterBean，将配置类转为bd
+
+    3.得到作用域，通用注解（@Primary、@DependsOn、@Lazy等）

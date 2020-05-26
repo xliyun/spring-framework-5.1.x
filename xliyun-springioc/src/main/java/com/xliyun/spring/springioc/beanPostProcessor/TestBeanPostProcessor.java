@@ -1,4 +1,4 @@
-package com.xliyun.spring.springioc.beanPostProcess;
+package com.xliyun.spring.springioc.beanPostProcessor;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -11,11 +11,11 @@ import org.springframework.stereotype.Component;
  * @date: 2020-05-03 15:31
  */
 @Component
-public class TestBeanPostProcessor2 implements BeanPostProcessor, PriorityOrdered {
+public class TestBeanPostProcessor implements BeanPostProcessor, PriorityOrdered {
 	@Override
 	public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
 		if(beanName.equals("indexDao")){
-			System.out.println("============postProcessBeforeInitialization2==========");
+			System.out.println("============postProcessBeforeInitialization==========");
 		}
 		/**
 		 * AOP就是在这里返回代理对象，可以参考BeanPostProcessor的一个实现类：AbstractAutoPorxyCreator
@@ -27,13 +27,13 @@ public class TestBeanPostProcessor2 implements BeanPostProcessor, PriorityOrdere
 	@Override
 	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 		if(beanName.equals("indexDao")){
-			System.out.println("============postProcessAfterInitialization2==========");
+			System.out.println("============postProcessAfterInitialization==========");
 		}
 		return bean;
 	}
 
 	@Override
 	public int getOrder() {
-		return 102;
+		return 101;
 	}
 }
