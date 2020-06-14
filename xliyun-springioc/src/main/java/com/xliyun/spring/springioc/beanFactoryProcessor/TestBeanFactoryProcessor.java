@@ -14,6 +14,7 @@ public class TestBeanFactoryProcessor {
 		AnnotationConfigApplicationContext annotationConfigApplicationContext =new AnnotationConfigApplicationContext();
 		annotationConfigApplicationContext.register(AppConfigNotHaveBeanFactoryProcessor.class);
 
+		//这里加到annotationConfigApplicationContext的list里面的PostProcessor会在refresh()的invokeBeanFactoryPostProcessors()-->getBeanFactoryPostProcessors()方法获取到
 		annotationConfigApplicationContext.addBeanFactoryPostProcessor(new MyBeanFactoryProcessorByHand());
 		annotationConfigApplicationContext.refresh();
 

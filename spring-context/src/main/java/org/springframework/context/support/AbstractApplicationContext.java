@@ -533,7 +533,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				postProcessBeanFactory(beanFactory);
 
 				// Invoke factory processors registered as beans in the context.
-				//执行自定义的PorcessBeanFacotry
+				//执行spring初始化时加入到容器的6个preocess(AnnotatedBeanDefinitionReader->AnnotationConfigUtils.registerAnnotationConfigProcessors(this.registry))
+				// 的pro自定义的PorcessBeanFacotry
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
@@ -655,9 +656,10 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
 		// Tell the internal bean factory to use the context's class loader etc.
 		beanFactory.setBeanClassLoader(getClassLoader());
-		//bean表达式解析器
+		//bean表达式解析器，我们一般用el表达式，这个用的比较少
 		beanFactory.setBeanExpressionResolver(new StandardBeanExpressionResolver(beanFactory.getBeanClassLoader()));
 		//注册属性编辑器，可以动态获取properties的属性
+		//对象与String类型的转换 <property red = "dao">
 		beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
 
 		// Configure the bean factory with context callbacks.
@@ -668,7 +670,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		 * this是给后置处理器赋值this.applicationContext = applicationContext;
 		 */
 		beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
-		//添加自动注入被忽略的列表
+		//下面这些是自动注入被忽略的接口
 		beanFactory.ignoreDependencyInterface(EnvironmentAware.class);
 		beanFactory.ignoreDependencyInterface(EmbeddedValueResolverAware.class);
 		beanFactory.ignoreDependencyInterface(ResourceLoaderAware.class);
@@ -678,15 +680,20 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		// BeanFactory interface not registered as resolvable type in a plain factory.
 		// MessageSource registered (and found for autowiring) as a bean.
+		//依赖替换，比如你在外部用annotationConfigApplicationContext.register(BeanFactory.class); 我们就用beanFacotry这个bd来替换
 		beanFactory.registerResolvableDependency(BeanFactory.class, beanFactory);
 		beanFactory.registerResolvableDependency(ResourceLoader.class, this);
 		beanFactory.registerResolvableDependency(ApplicationEventPublisher.class, this);
 		beanFactory.registerResolvableDependency(ApplicationContext.class, this);
 
 		// Register early post-processor for detecting inner beans as ApplicationListeners.
+		//暂时不知道什么用
 		beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(this));
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found.
+		//意思是如果自定义的Bean中没有名为"systemProperties"和"systemEnviroment"的Bean,
+		//则注册两个Bean,key为"systemProperties"和"systemEnviroment",value为Map,\
+		//这两个Bean是一些系统配置和系统环境信息
 		if (beanFactory.containsBean(LOAD_TIME_WEAVER_BEAN_NAME)) {
 			beanFactory.addBeanPostProcessor(new LoadTimeWeaverAwareProcessor(beanFactory));
 			// Set a temporary ClassLoader for type matching.
@@ -721,8 +728,14 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * <p>Must be called before singleton instantiation.
 	 */
 	protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
-		//这个地方需要注意getBeanFactoryPostProcessors()是获取自定义的getBeanFactoryPostProcessors(程序员自己写的，没有加@Component注解交给spring管理的),参考TestBeanFactoryProcessor用法
+		//这个地方需要注意getBeanFactoryPostProcessors()是获取手动注册的PostProcessors  getBeanFactoryPostProcessors(程序员自己写的，没有加@Component注解交给spring管理的),参考TestBeanFactoryProcessor用法
 		//得到spring内部自己维护的BeanDefinitionRegistryPostProcessor
+		//也不仅仅是程序员自己写的
+		//自己写的可以加companent也可以不加
+		//如果加了companent，getBeanFactoryPostProcessors()这个地方得不到，是spring自己扫描出来的，放到容器里面，反正最后都会在invokeBeanFactoryPostProcessors()方法里面运行
+		//因为getBeanFactoryPostProcessors()直接获取一个list
+		//这个list是在AnnotationConfigApplicationContext()中定义的，但是AnnotationConfigApplicationContext初始化的时候并没有往里面赋值，
+		//所谓的自定义就是手动调用annotationConfigApplicationContext.addBeanFactoryPostProcessor(new MyBeanFactoryProcessorByHand());
 		PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(beanFactory, getBeanFactoryPostProcessors());
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found in the meantime

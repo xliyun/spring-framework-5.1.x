@@ -274,6 +274,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 		for (String basePackage : basePackages) {
 			//扫描basePackage路径下的java文件
 			//并把它转成BeanDefiniton类型，，主要是findCandidateComponents做扫描
+			//这里用到了asm技术
 			Set<BeanDefinition> candidates = findCandidateComponents(basePackage);
 			for (BeanDefinition candidate : candidates) {
 				//解析scope属性，单例，原型

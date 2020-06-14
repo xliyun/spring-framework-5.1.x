@@ -89,6 +89,7 @@ abstract class ConfigurationClassUtils {
 		AnnotationMetadata metadata;
 		//不一样的bd metadata元数据获取方式也不一样，比如注解类型的bd，元数据都是放到注解中
 		//判断beanDef是否是注解类型bd，调试到这里的注解bd只有appConfig这个注解，其他的都是professor这些我们自定义的bd,是RootBeanDefinition类型的
+		//AnnotatedBeanDefinitionReader读取的都是通过doRegisterBean AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(beanClass);
 		if (beanDef instanceof AnnotatedBeanDefinition &&
 				className.equals(((AnnotatedBeanDefinition) beanDef).getMetadata().getClassName())) {
 			// Can reuse the pre-parsed metadata from the given BeanDefinition...
@@ -117,6 +118,7 @@ abstract class ConfigurationClassUtils {
 				return false;
 			}
 		}
+
 
 		//isFullConfigurationCandidate通过元数据判断是否加了@Configuration 等注解，然后将处理标志变为已处理
 		if (isFullConfigurationCandidate(metadata)) {

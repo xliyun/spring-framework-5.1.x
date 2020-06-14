@@ -178,6 +178,9 @@ public abstract class AnnotationConfigUtils {
 
 		//下面这些跟上面的逻辑一样，就是往DefaultListableBeanFactory工厂里的map里注册各种类
 		if (!registry.containsBeanDefinition(AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME)) {
+			//AutowiredAnnotationBeanPostProcessor 实现了 MergedBeanDefinitionPostProcessor
+			//MergedBeanDefinitionPostProcessor 最终实现了 BeanPostProcessor
+			//并且实现了InstantiationAwareBeanPostProcessorAdapter ，就可以插手spring初始化
 			RootBeanDefinition def = new RootBeanDefinition(AutowiredAnnotationBeanPostProcessor.class);
 			def.setSource(source);
 			beanDefs.add(registerPostProcessor(registry, def, AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME));

@@ -61,11 +61,12 @@ final class PostProcessorRegistrationDelegate {
 		//判断beanFactory是否实现了BeanDefinitionRegistry这个接口
 		if (beanFactory instanceof BeanDefinitionRegistry) {
 			BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
-			//下面两个list(BeanDefinitionRegistryPostProcessor也是继承了BeanFactoryPostProcessor但是多了一个方法postProcessBeanDefinitionRegistry()
-			List<BeanFactoryPostProcessor> regularPostProcessors = new ArrayList<>(); //放我们自定义的
+			//下面两个list
+			// BeanDefinitionRegistryPostProcessor也是继承了BeanFactoryPostProcessor但是多了一个方法postProcessBeanDefinitionRegistry()
+			List<BeanFactoryPostProcessor> regularPostProcessors = new ArrayList<>(); //放程序员手动annotationConfigApplicationContext.addBeanFactoryPostProcessor(new MyBeanFactoryProcessorByHand());的
 			List<BeanDefinitionRegistryPostProcessor> registryProcessors = new ArrayList<>();
 
-			//循环所有的beanFactoryPostProcessors
+			//将传递进来的beanFactoryPostProcessors按照实现父类接口还是子类接口分别放到两个list当中
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
 				//MyBeanFactoryProcessorByHand implements BeanFactoryPostProcessor 所以不走这个
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
@@ -146,6 +147,7 @@ final class PostProcessorRegistrationDelegate {
 					}
 				}
 				sortPostProcessors(currentRegistryProcessors, beanFactory);
+				//将自己手动加的和spring初始化的PostProcessor合并
 				registryProcessors.addAll(currentRegistryProcessors);
 				invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
 				currentRegistryProcessors.clear();
