@@ -259,13 +259,17 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 	 * {@link Configuration} classes.
 	 */
 	public void processConfigBeanDefinitions(BeanDefinitionRegistry registry) {
-		//app提供的bean
+		//定义一list存放app提供的bd(项目当中提供的项目提供的@Compent)
 		List<BeanDefinitionHolder> configCandidates = new ArrayList<>();
 		//获取容器中所有注册的bean名字，加上我们自己的AppConfig.class应该有7个
 		String[] candidateNames = registry.getBeanDefinitionNames();
 
 		for (String beanName : candidateNames) {
 			BeanDefinition beanDef = registry.getBeanDefinition(beanName);
+			/**
+			 * Full
+			 * Lite
+			 */
 			//isFullConfigurationClass判断configurationClass属性是否是full或者lite，如果是,则意味着已经处理过了，直接跳过
 			if (ConfigurationClassUtils.isFullConfigurationClass(beanDef) ||
 					ConfigurationClassUtils.isLiteConfigurationClass(beanDef)) {
@@ -315,16 +319,17 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		}
 
 		// Parse each @Configuration class
-		//实例化ConfigurationClassParser
+		//实例化ConfigurationClassParser 为了解析各个配置类
 		ConfigurationClassParser parser = new ConfigurationClassParser(
 				this.metadataReaderFactory, this.problemReporter, this.environment,
 				this.resourceLoader, this.componentScanBeanNameGenerator, registry);
 
 		//实例化两个set,candidates用于将之前加入的configCandidates进行去重
 		//configCandidates是上面放配置类的list
-		//因为可能有多个配置类重复了
+		//因为可能有多个配置类重复了，用set就是为了去重
 		//alradyParsed用于判断是否处理过
 		Set<BeanDefinitionHolder> candidates = new LinkedHashSet<>(configCandidates);
+		//这个set是用来放处理完的配置类，处理完一个就放进去
 		Set<ConfigurationClass> alreadyParsed = new HashSet<>(configCandidates.size());
 		do {
 			//扫描包，传入配置类的set candidates

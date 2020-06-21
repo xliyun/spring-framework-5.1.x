@@ -305,6 +305,7 @@ class ConfigurationClassParser {
 					if (bdCand == null) {
 						bdCand = holder.getBeanDefinition();
 					}
+					//检查
 					if (ConfigurationClassUtils.checkConfigurationClassCandidate(bdCand, this.metadataReaderFactory)) {
 						parse(bdCand.getBeanClassName(), holder.getBeanName());
 					}
@@ -313,7 +314,10 @@ class ConfigurationClassParser {
 		}
 
 		// Process any @Import annotations
-		//处理@Import注解
+		//处理@Import import 3中情况
+		//ImportSelector
+		//普通类
+		//ImportBeanDefinitionRegistrar.class
 		processImports(configClass, sourceClass, getImports(sourceClass), true);
 
 		// Process any @ImportResource annotations

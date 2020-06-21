@@ -73,7 +73,7 @@ class ComponentScanAnnotationParser {
 	}
 
 
-	public Set<BeanDefinitionHolder> parse(AnnotationAttributes componentScan, final String declaringClass) {
+	public Set<BeanDefinitionHolder> 	parse(AnnotationAttributes componentScan, final String declaringClass) {
 		//这个方法最后return 的是doScan方法,返回的set是我们所有扫描出来的对象
 		//判断有没有设置外部的bean生成器
 		ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(this.registry,
@@ -97,6 +97,7 @@ class ComponentScanAnnotationParser {
 		//匹配一个表达式
 		scanner.setResourcePattern(componentScan.getString("resourcePattern"));
 
+		//遍历当中过滤 includeFilters excludeFilters就是@ImportSourcez注解中的两个成员变量
 		for (AnnotationAttributes filter : componentScan.getAnnotationArray("includeFilters")) {
 			for (TypeFilter typeFilter : typeFiltersFor(filter)) {
 				scanner.addIncludeFilter(typeFilter);
@@ -108,6 +109,7 @@ class ComponentScanAnnotationParser {
 			}
 		}
 
+		//判断是不是懒加载，默认是false，这里相当于是将全局的lazyInit变成tru，但是这里的bd还没有初始化，这个lazy还没有作用到bd上面
 		boolean lazyInit = componentScan.getBoolean("lazyInit");
 		if (lazyInit) {
 			scanner.getBeanDefinitionDefaults().setLazyInit(true);
@@ -120,13 +122,17 @@ class ComponentScanAnnotationParser {
 					ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
 			Collections.addAll(basePackages, tokenized);
 		}
+
+		//拿到所有包的名字
 		for (Class<?> clazz : componentScan.getClassArray("basePackageClasses")) {
 			basePackages.add(ClassUtils.getPackageName(clazz));
 		}
+		//判断包是不是空的
 		if (basePackages.isEmpty()) {
 			basePackages.add(ClassUtils.getPackageName(declaringClass));
 		}
 
+		//还没看，好像不是很重要
 		scanner.addExcludeFilter(new AbstractTypeHierarchyTraversingFilter(false, false) {
 			@Override
 			protected boolean matchClassName(String className) {
@@ -134,6 +140,8 @@ class ComponentScanAnnotationParser {
 			}
 		});
 
+
+		//
 		return scanner.doScan(StringUtils.toStringArray(basePackages));
 	}
 

@@ -119,11 +119,15 @@ abstract class ConfigurationClassUtils {
 			}
 		}
 
-
+		//判断当前这个bd中存在的类是不是加了@Configration注解
+		//如果存在则spring认为他是一个全注解类
 		//isFullConfigurationCandidate通过元数据判断是否加了@Configuration 等注解，然后将处理标志变为已处理
 		if (isFullConfigurationCandidate(metadata)) {
+			//如果是，就设置设置为full
+			//说明这个配置类是一个全注解的类
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
 		}
+		//如果不存在Confiuration注解，spring则认为是一个部分注解类
 		//isLiteConfigurationCandidate通过元数据判断是否加了@Component @ComponentScan @Import @ImportResource等注解 等注解，然后将处理标志变为已处理
 		else if (isLiteConfigurationCandidate(metadata)) {
 			//setAttribute("configurationClass","lite")

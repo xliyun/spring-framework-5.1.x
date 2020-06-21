@@ -277,10 +277,12 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 			//这里用到了asm技术
 			Set<BeanDefinition> candidates = findCandidateComponents(basePackage);
 			for (BeanDefinition candidate : candidates) {
-				//解析scope属性，单例，原型
+				//解析scope属性，单例，原型，作用域
 				ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(candidate);
 				candidate.setScope(scopeMetadata.getScopeName());
 				String beanName = this.beanNameGenerator.generateBeanName(candidate, this.registry);
+				//findCandidateComponets(basePackage)这段代码当中，被扫描出来的类都是用ScannedGenericBeanDefinition类包装，而ScannedGenericBeanDefinition继承了GenericBeanDefinition，GenericBeanDefinition继承了AbstractBeanDefinition
+				//这里所有被扫描的bd都会被赋值上默认属性，如果你这个配置类加了一些配置的注解，比如@Lazy之类的，会在下面那个判断再赋值一遍，也就是说，初始的时候bd的懒加载统一赋值成false,然后在下面被重新赋值一遍
 				if (candidate instanceof AbstractBeanDefinition) {
 					//如果这个类是AbstractBeanDefinition的子类
 					//则为他设置默认值，比如lazy,init,destory
@@ -311,6 +313,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * @param beanName the generated bean name for the given bean
 	 */
 	protected void postProcessBeanDefinition(AbstractBeanDefinition beanDefinition, String beanName) {
+		//设置bd的默认属性setLazyInit、setAutowireMode等等
 		beanDefinition.applyDefaults(this.beanDefinitionDefaults);
 		if (this.autowireCandidatePatterns != null) {
 			beanDefinition.setAutowireCandidate(PatternMatchUtils.simpleMatch(this.autowireCandidatePatterns, beanName));
