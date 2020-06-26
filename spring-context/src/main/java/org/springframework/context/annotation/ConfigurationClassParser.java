@@ -251,6 +251,7 @@ class ConfigurationClassParser {
 		}
 		while (sourceClass != null);
 
+		//一个map,用来存放扫描出来的bean(注意这里的bean不是对象，仅仅是bean信息，因为还没有到)
 		this.configurationClasses.put(configClass, configClass);
 	}
 
@@ -313,11 +314,40 @@ class ConfigurationClassParser {
 			}
 		}
 
+		/**
+		 * 上面的代码就是扫描普通类---@Component
+		 * 并且放到了map当中去了
+		 * 普通类							扫描完成后注册
+		 * importSelector					先添加到configurationClasses;然后注册  loadbean
+		 * ImportBeanDefinitionRegistrar 	放到importBeanDefinitionRegistors 然后再注册
+		 、@Import(普通类)					先添加到configurationClasses;然后注册
+		 */
 		// Process any @Import annotations
 		//处理@Import import 3中情况
 		//ImportSelector
-		//普通类
+		//@Import(普通类)
 		//ImportBeanDefinitionRegistrar.class
+		//这里和内部调用时候的情况不同
+		/**
+		 * 这里处理的import是需要判断我们的类当中是否有@Import注解       getImports(sourceClass)就是判断传进来的sourceCLass是不是加了@Import注解
+		 * 如果有就把@Import当中的值拿出来，是一个类
+		 * 比如@Import(xxx.class)，那么这里便把xxxx传进去进行解析
+		 * 在解析过程中如果发觉是一个importSelector那么就会去回调selector的方法
+		 * 返回一个字符串（类名），通过这个字符串得到一个类
+		 * 继而再递归调用本方法来出来处理这个类
+		 * 为什么要单独写这么多注释来说明这个方法？下面的注释是终极理解
+		 * 因为selector返回的那个类，严格意义上来讲不符合@Import(xxxx.class)，因为这个类没有被直接import
+		 * 如果不符合，就不会调用这个方法 getImport(sourceClass)就是得到所有的import的类
+		 * 但是注意的是递归当中没有getImport(sourceCLass)的，意思是直接把selector当中返回得我类直接当成一个import的类去解析
+		 * 总之就是一句话，@Import(xxx.class)，那么这个类就会被解析
+		 * 如果xxx是selector的那么他当中返回的类虽然没有直接加上@Import，但是也会直接解析
+		 */
+		/**终极理解
+		 * 就是说，第一次调用processImports，configClass就是我们的配置类AppCofig.class,
+		 * sourceClass就是我们@Import里的值，也就是xxx.class，
+		 * getImports(sourceCLass)是判断@Import的值是哪一种@Import，然后再进行处理
+		 * 而在递归中的processImports(configClass, currentSourceClass, importSourceClasses, false); importSourceClass是判断当前类属于哪一种@Import
+		 */
 		processImports(configClass, sourceClass, getImports(sourceClass), true);
 
 		// Process any @ImportResource annotations
@@ -576,19 +606,24 @@ class ConfigurationClassParser {
 			this.importStack.push(configClass);
 			try {
 				for (SourceClass candidate : importCandidates) {
-					//
+					//如果@Import对象属于ImportSelecotr.class类，最后面的else是用来处理普通类的
 					if (candidate.isAssignable(ImportSelector.class)) {
 						// Candidate class is an ImportSelector -> delegate to it to determine imports
+						//得到这个@ImportSelector的类 
 						Class<?> candidateClass = candidate.loadClass();
+						//反射实现一个对象
 						ImportSelector selector = BeanUtils.instantiateClass(candidateClass, ImportSelector.class);
 						ParserStrategyUtils.invokeAwareMethods(
 								selector, this.environment, this.resourceLoader, this.registry);
+						//DeferredImportSelector用于延迟执行当前这个@Import，就是不立马执行当前的@Import
 						if (selector instanceof DeferredImportSelector) {
 							this.deferredImportSelectorHandler.handle(configClass, (DeferredImportSelector) selector);
 						}
 						else {
 							String[] importClassNames = selector.selectImports(currentSourceClass.getMetadata());
 							Collection<SourceClass> importSourceClasses = asSourceClasses(importClassNames);
+
+							//递归处理@Import导入的类里还有带有@Import注解的类
 							processImports(configClass, currentSourceClass, importSourceClasses, false);
 						}
 					}
@@ -600,13 +635,19 @@ class ConfigurationClassParser {
 								BeanUtils.instantiateClass(candidateClass, ImportBeanDefinitionRegistrar.class);
 						ParserStrategyUtils.invokeAwareMethods(
 								registrar, this.environment, this.resourceLoader, this.registry);
+						//添加到一个list当中，和importSelector不同
 						configClass.addImportBeanDefinitionRegistrar(registrar, currentSourceClass.getMetadata());
 					}
+					//一个普通的Bean类，加了@Compont 或者@Service等等的
 					else {
 						// Candidate class not an ImportSelector or ImportBeanDefinitionRegistrar ->
 						// process it as an @Configuration class
 						this.importStack.registerImport(
 								currentSourceClass.getMetadata(), candidate.getMetadata().getClassName());
+						//processConfigurationClass里面主要是把类放到configurationClasses
+						//configurationClasses是一个集合，会在后面拿出来解析成bd继而注册
+						//可以看到普通类在扫描出来的时候就被注册了
+						//如果是ImportSelector,会先放到configurationClasses后面进行注册
 						processConfigurationClass(candidate.asConfigClass(configClass));
 					}
 				}

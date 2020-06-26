@@ -250,6 +250,8 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			processConfigBeanDefinitions((BeanDefinitionRegistry) beanFactory);
 		}
 
+		//产生cglib代理
+		//为啥需要产生cglib代理呢？
 		enhanceConfigurationClasses(beanFactory);
 		beanFactory.addBeanPostProcessor(new ImportAwareBeanPostProcessor(beanFactory));
 	}
@@ -336,6 +338,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			parser.parse(candidates);
 			parser.validate();
 
+			//扫描出来的类全部都放会到configurationClasses当中去，比如AppConfig.class，但是AppConfig.class已经注册了
 			Set<ConfigurationClass> configClasses = new LinkedHashSet<>(parser.getConfigurationClasses());
 			configClasses.removeAll(alreadyParsed);
 
@@ -345,10 +348,19 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 						registry, this.sourceExtractor, this.resourceLoader, this.environment,
 						this.importBeanNameGenerator, parser.getImportRegistry());
 			}
+
+			/**
+			 * 这里得注意的是扫描出来的bean当中可能包含了特殊类
+			 * 比如ImportBeanDefinitionRegister那么也在这个方法里面处理
+			 * 但是并不是包含在configClass当中
+			 * configClasses当中主要包含的是importSelector
+			 * 因为ImportBeanDefinitionRegistrar在扫描出来的时候已经被添加到一个List当中去了
+			 */
 			this.reader.loadBeanDefinitions(configClasses);
 			alreadyParsed.addAll(configClasses);
 
 			candidates.clear();
+			//由于我们进行了扫描，把扫描出来的BeanDefinition注册给了factory,--fz
 			if (registry.getBeanDefinitionCount() > candidateNames.length) {
 				String[] newCandidateNames = registry.getBeanDefinitionNames();
 				Set<String> oldCandidateNames = new HashSet<>(Arrays.asList(candidateNames));
@@ -392,6 +404,8 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		Map<String, AbstractBeanDefinition> configBeanDefs = new LinkedHashMap<>();
 		for (String beanName : beanFactory.getBeanDefinitionNames()) {
 			BeanDefinition beanDef = beanFactory.getBeanDefinition(beanName);
+			//判断是否是一个全注解类，如果我们的配置类加了@Configuration注解，就被被标记为full全注解类，如果没有加，就是lite
+			//扫描是全注解类？full和lite的关系
 			if (ConfigurationClassUtils.isFullConfigurationClass(beanDef)) {
 				if (!(beanDef instanceof AbstractBeanDefinition)) {
 					throw new BeanDefinitionStoreException("Cannot enhance @Configuration bean definition '" +
@@ -406,6 +420,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 				configBeanDefs.put(beanName, (AbstractBeanDefinition) beanDef);
 			}
 		}
+		//如果我们的AppConfig.class(配置类)没有加@Configuration注解，就会在这里return,不执行下面cglib动态代理的代码
 		if (configBeanDefs.isEmpty()) {
 			// nothing to enhance -> return immediately
 			return;

@@ -117,12 +117,15 @@ final class PostProcessorRegistrationDelegate {
 			//合并list不重要，就是把spring默认的合并到自己的
 			registryProcessors.addAll(currentRegistryProcessors);
 			//循环调用BeanDefinitionRegistryPostProcessor的postProcessBeanDefinitionRegistry方法
+			//最重要，因为这个方法就是调用执行所有的BeanDefinitionRegistryPostProcessor
 			invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
-			//这个list只是一个临时变量，所以要清除
+			//执行完了所有的BeanDefinitionRegistryPostProcessor
+			//这个list只是一个临时变量，用完了，所以要清除
 			currentRegistryProcessors.clear();
 
-			// Next, invoke the BeanDefinitionRegistryPostProcessors that implement Ordered.
+			//这段代码是判断新扫描出来的是不是还包含BeanDefinitionRegistryPostProcessor，就再处理一遍，跟上面的代码一样
 			postProcessorNames = beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
+			//遍历这些BeanDefinitionRegistryPostProcessor，如果是上面那段没有处理过的，再处理
 			for (String ppName : postProcessorNames) {
 				if (!processedBeans.contains(ppName) && beanFactory.isTypeMatch(ppName, Ordered.class)) {
 					currentRegistryProcessors.add(beanFactory.getBean(ppName, BeanDefinitionRegistryPostProcessor.class));
@@ -154,6 +157,18 @@ final class PostProcessorRegistrationDelegate {
 			}
 
 			// Now, invoke the postProcessBeanFactory callback of all processors handled so far.
+			//执行BeanFacotryPostProcessor的回调，
+			//前面执行的BeanFactoryPostProcessor的子类BeanDefinitionRegistryPostProcessor的回调
+			//这次执行的是BeanFactoryPostProcessor
+			//上面执行的invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry); currentRegistryProcessorss是BeanDefinitionRegistryPostProcessor
+
+			/**
+			 * 下面的代码是要执行继承了BeanFactoryPostProcessor的类，
+			 *  前面invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry); 执行实现了BeanDefinitionRegistryPostProcessor接口的类，这些类，同时也是实现了BeanDefinitionRegistryPostProcessor父接口的方法，
+			 *  在这里先执行实现了BeanDefinitionRegistryPostProcessor接口的类的postProcessBeanFactory方法，然后再去执行实现了父接口BeanFactoryPostProcessor的类的postProcessBeanFactory方法
+			 *  比如我们这里暂时只有ConfigurationClassPostProcessor 就是实现了了BeanDefinitionRegistryPostProcessor接口
+			 *  和父接口BeanFactoryPostProcessor的postProcessBeanFactory方法
+			 */
 			invokeBeanFactoryPostProcessors(registryProcessors, beanFactory);
 			invokeBeanFactoryPostProcessors(regularPostProcessors, beanFactory);
 		}
