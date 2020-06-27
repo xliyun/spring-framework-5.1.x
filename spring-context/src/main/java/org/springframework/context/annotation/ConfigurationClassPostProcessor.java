@@ -250,9 +250,10 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			processConfigBeanDefinitions((BeanDefinitionRegistry) beanFactory);
 		}
 
-		//产生cglib代理
-		//为啥需要产生cglib代理呢？
+		//给配置类(加了@Configuration的)产生产生cglib代理
+		//为啥需要产生cglib代理呢？因为我们要维护配置类中的bean的作用域
 		enhanceConfigurationClasses(beanFactory);
+		//添加一个BeanPostProcessor后置处理器
 		beanFactory.addBeanPostProcessor(new ImportAwareBeanPostProcessor(beanFactory));
 	}
 
@@ -350,6 +351,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			}
 
 			/**
+			 * 上面parser.parse(candidates)方法扫描出来的放到configClasses里的类要在这里处理成bd放到map中去！！！！！！！！！！！！！
 			 * 这里得注意的是扫描出来的bean当中可能包含了特殊类
 			 * 比如ImportBeanDefinitionRegister那么也在这个方法里面处理
 			 * 但是并不是包含在configClass当中
@@ -435,6 +437,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 				// Set enhanced subclass of the user-specified bean class
 				Class<?> configClass = beanDef.resolveBeanClass(this.beanClassLoader);
 				if (configClass != null) {
+					//完成对全注解类的cglib代理!!!!!!!!!!!!!!!!!!!!!
 					Class<?> enhancedClass = enhancer.enhance(configClass, this.beanClassLoader);
 					if (configClass != enhancedClass) {
 						if (logger.isTraceEnabled()) {
