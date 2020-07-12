@@ -298,6 +298,7 @@ class ConfigurationClassParser {
 				Set<BeanDefinitionHolder> scannedBeanDefinitions =
 						//这里是去扫描包调用doScan方法,这个方法最后return的是doScan方法,返回的set是我们所有扫描出来的对象Set<BeanDefinitionHolder>
 						//这里把这个方法当做黑箱，就是扫描出所有的bean来理解就行
+						//并且里面的doSan方法通过registerBeanDefinition(definitionHolder, this.registry);注册了所有扫出来的bean
 						this.componentScanParser.parse(componentScan, sourceClass.getMetadata().getClassName());
 				// Check the set of scanned definitions for any further config classes and parse recursively if needed
 				//检查扫描出来的类中是否还有@Configuration注解

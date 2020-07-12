@@ -52,6 +52,8 @@ final class PostProcessorRegistrationDelegate {
 	}
 
 
+	//beanFactoryPostProcessors是程序员自定义的
+	//所以是先执行程序员自定的，再去执行系统自带的
 	public static void invokeBeanFactoryPostProcessors(
 			ConfigurableListableBeanFactory beanFactory, List<BeanFactoryPostProcessor> beanFactoryPostProcessors) {
 
@@ -163,13 +165,14 @@ final class PostProcessorRegistrationDelegate {
 			//上面执行的invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry); currentRegistryProcessorss是BeanDefinitionRegistryPostProcessor
 
 			/**
-			 * 下面的代码是要执行继承了BeanFactoryPostProcessor的类，
+			 * 下面的代码是要执行继承了BeanFactoryPostProcessor的类，执行BeanFactoryPostProcessor的回调
 			 *  前面invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry); 执行实现了BeanDefinitionRegistryPostProcessor接口的类，这些类，同时也是实现了BeanDefinitionRegistryPostProcessor父接口的方法，
 			 *  在这里先执行实现了BeanDefinitionRegistryPostProcessor接口的类的postProcessBeanFactory方法，然后再去执行实现了父接口BeanFactoryPostProcessor的类的postProcessBeanFactory方法
 			 *  比如我们这里暂时只有ConfigurationClassPostProcessor 就是实现了了BeanDefinitionRegistryPostProcessor接口
 			 *  和父接口BeanFactoryPostProcessor的postProcessBeanFactory方法
 			 */
 			invokeBeanFactoryPostProcessors(registryProcessors, beanFactory);
+			//执行自定义的BeanFactoryPostProcessor
 			invokeBeanFactoryPostProcessors(regularPostProcessors, beanFactory);
 		}
 
@@ -180,15 +183,17 @@ final class PostProcessorRegistrationDelegate {
 
 		// Do not initialize FactoryBeans here: We need to leave all regular beans
 		// uninitialized to let the bean factory post-processors apply to them!
+		//拿出所有的BeanFactoryPostProcessor，
+		//只有ConfigurationClassPostProcessor
 		String[] postProcessorNames =
 				beanFactory.getBeanNamesForType(BeanFactoryPostProcessor.class, true, false);
-
 		// Separate between BeanFactoryPostProcessors that implement PriorityOrdered,
 		// Ordered, and the rest.
 		List<BeanFactoryPostProcessor> priorityOrderedPostProcessors = new ArrayList<>();
 		List<String> orderedPostProcessorNames = new ArrayList<>();
 		List<String> nonOrderedPostProcessorNames = new ArrayList<>();
 		for (String ppName : postProcessorNames) {
+			//如果ppName包含在上面处理过的set当中，就什么都不做，如果不包含，就是扫描过程中新增加的
 			if (processedBeans.contains(ppName)) {
 				// skip - already processed in first phase above
 			}
@@ -229,7 +234,14 @@ final class PostProcessorRegistrationDelegate {
 
 	public static void registerBeanPostProcessors(
 			ConfigurableListableBeanFactory beanFactory, AbstractApplicationContext applicationContext) {
-
+		/**
+		 * 这里初始化的时候会拿到三个后置处理器，其中一个就是处理ApplicationContextAware
+		 * 是在前面prepareBeanFactory(beanFactory);初始化spring的时候添加了beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this)); beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(this));
+		 * 还有一个是invokeBeanFactoryPostProcessors(beanFactory);cglib增强的时候增加的ImportAwareBeanPostProcessor
+		 *
+		 */
+        //从beanDefinitionMap中得到所有的BeanPostProcessors，然后把它们注册到BeanPostProcessors里面
+		//我们自己添加的后置处理器也会在这里被拿出来注册（我们自己添加可以通过加@Import注解）
 		String[] postProcessorNames = beanFactory.getBeanNamesForType(BeanPostProcessor.class, true, false);
 
 		// Register BeanPostProcessorChecker that logs an info message when
@@ -293,6 +305,8 @@ final class PostProcessorRegistrationDelegate {
 
 		// Re-register post-processor for detecting inner beans as ApplicationListeners,
 		// moving it to the end of the processor chain (for picking up proxies etc).
+		//将BeanPostProcessor注册到beanFactory的beanPostProcessor当中，待后面执行处理
+		//调试到这里是有7个的
 		beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(applicationContext));
 	}
 
@@ -347,6 +361,8 @@ final class PostProcessorRegistrationDelegate {
 	 * BeanPostProcessor that logs an info message when a bean is created during
 	 * BeanPostProcessor instantiation, i.e. when a bean is not eligible for
 	 * getting processed by all BeanPostProcessors.
+	 * 当spring的配置中后置处理器还没有被注册就已经开始了bean初始化==>检查bean没有经过后置处理器的处理就进行了实例化
+	 * 便会打印出BeanPostProcessorChecker中设定的信息
 	 */
 	private static final class BeanPostProcessorChecker implements BeanPostProcessor {
 
@@ -358,6 +374,7 @@ final class PostProcessorRegistrationDelegate {
 
 		public BeanPostProcessorChecker(ConfigurableListableBeanFactory beanFactory, int beanPostProcessorTargetCount) {
 			this.beanFactory = beanFactory;
+			//检查通过的后置处理器的长度
 			this.beanPostProcessorTargetCount = beanPostProcessorTargetCount;
 		}
 

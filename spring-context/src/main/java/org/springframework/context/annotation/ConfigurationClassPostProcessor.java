@@ -358,6 +358,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			 * configClasses当中主要包含的是importSelector
 			 * 因为ImportBeanDefinitionRegistrar在扫描出来的时候已经被添加到一个List当中去了
 			 */
+			//bd 到 map 除却普通类（除了@Import或者@Bean之类的类，用@Component、@Servie这些进来的）
 			this.reader.loadBeanDefinitions(configClasses);
 			alreadyParsed.addAll(configClasses);
 
@@ -473,6 +474,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			return pvs;
 		}
 
+		//AOP bean初始化之前调用
 		@Override
 		public Object postProcessBeforeInitialization(Object bean, String beanName) {
 			if (bean instanceof ImportAware) {

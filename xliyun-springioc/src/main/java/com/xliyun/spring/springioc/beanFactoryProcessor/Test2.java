@@ -14,8 +14,6 @@ public class Test2 {
 	public static void main(String[] args) {
 		AnnotationConfigApplicationContext annotationConfigApplicationContext =new AnnotationConfigApplicationContext();
 		annotationConfigApplicationContext.register(AppConfig.class);
-
-
 		annotationConfigApplicationContext.refresh();
 
 		IndexDao indexDao = (IndexDao) annotationConfigApplicationContext.getBean("indexDao");
