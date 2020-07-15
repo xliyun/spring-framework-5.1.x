@@ -253,7 +253,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		 * 这个方法初始化的时候会调用，在getBean的时候也会调用
 		 * 为什么需要这么做呢？
 		 * 也就是说spring在初始化的时候先获取这个对象
-		 * 判断这个对象是否被实例化好了
+		 * 判断这个对象是否被实例化好了（普通情况下是为空的，有一种情况，当bean是懒加载的时候，我们使用的时候回调用getBean）
 		 * 从spring的bean容器中获取一个bean，由于spring中bean容器是一个map(sing
 		 * 所以你可以理解getSingle(beanName)等于beanMap.get(beanName)
 		 * 由于方法会在spring环境初始化的时候（就是对象被创建的时候调用一次）
@@ -292,7 +292,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			// Fail if we're already creating this bean instance:
 			// We're assumably within a circular reference.
 			/**
-			 * 原型
+			 * 原型就会抛出异常
 			 * 如果是原型不应该在初始化的时候创建
 			 */
 			//判断这个beanName是不是已经创建了
@@ -301,7 +301,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 
 			// Check if bean definition exists in this factory.
-			//parentBeanFactory需要我们去改造的
+			//parentBeanFactory需要我们去改造的，很少这样做
 			BeanFactory parentBeanFactory = getParentBeanFactory();
 			if (parentBeanFactory != null && !containsBeanDefinition(beanName)) {
 				// Not found -> check parent.
@@ -324,7 +324,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 
 			if (!typeCheckOnly) {
-				//添加到alreadyCreated set集合当中，表示他已经创建过一场
+				//添加到alreadyCreated set集合当中，表示他已经创建过，防止重复创建
 				markBeanAsCreated(beanName);
 			}
 
@@ -350,12 +350,15 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 						}
 					}
 				}
-
+                //第一次创建bean的时候是在这里！！！！
 				// Create bean instance.
 				if (mbd.isSingleton()) {
+					//初始化时第二次调用getSingleton
+					//这里先走getSingleton里面的方法，后面是lambda写法，一个匿名接口，回调函数
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
-							//这里默认调用的是AbstractAutowireCapableBeanFactory
+							//这里调用的是本类（当前类是静态类，这个方法子类实现了）的子类
+							// AbstractAutowireCapableBeanFactory.createBean(String beanName, RootBeanDefinition mbd, @Nullable Object[] args)
 							return createBean(beanName, mbd, args);
 						}
 						catch (BeansException ex) {

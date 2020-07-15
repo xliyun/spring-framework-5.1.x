@@ -60,12 +60,16 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 	@Override
 	public Object instantiate(RootBeanDefinition bd, @Nullable String beanName, BeanFactory owner) {
 		// Don't override the class with CGLIB if no overrides.
+		//检测bean配置中是否配置了 loopup-method 或 replace-method
+		//如果配置了就需要使用CGLIB构建bean对象
 		if (!bd.hasMethodOverrides()) {
 			Constructor<?> constructorToUse;
 			synchronized (bd.constructorArgumentLock) {
 				constructorToUse = (Constructor<?>) bd.resolvedConstructorOrFactoryMethod;
+				//判断有没有指定使用哪个构造方法
 				if (constructorToUse == null) {
 					final Class<?> clazz = bd.getBeanClass();
+					//判断class是不是一个接口
 					if (clazz.isInterface()) {
 						throw new BeanInstantiationException(clazz, "Specified class is an interface");
 					}
@@ -75,8 +79,11 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 									(PrivilegedExceptionAction<Constructor<?>>) clazz::getDeclaredConstructor);
 						}
 						else {
+							//获取默认的构造方法，反射
+							//constructorToUse表示我们要用哪个构造方法初始化
 							constructorToUse = clazz.getDeclaredConstructor();
 						}
+						//
 						bd.resolvedConstructorOrFactoryMethod = constructorToUse;
 					}
 					catch (Throwable ex) {

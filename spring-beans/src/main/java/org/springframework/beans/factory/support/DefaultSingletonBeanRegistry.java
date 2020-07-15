@@ -175,9 +175,17 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 */
 	@Nullable
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
+		//从map中获取bean如果不为空直接返回，不再进行初始化工作
+		//本方法主要用于程序员在外部使用annotationConfigApplicationContext.getBean()的时候使用
+		/**
+		 * 1.按照代码的逻辑，我们第一次调用到这里的时候，记录正在创建的bean的set里面是空的，所以isSingletonCurrentlyInCreation(beanName)返回false
+		 * 所以本次getSingleton返回null
+		 * 2.第二次调用的是下面的getSingleton(String beanName, ObjectFactory<?> singletonFactory)方法
+		 * spring已经做了该做的验证，如果为空则创建对象
+		 */
 		Object singletonObject = this.singletonObjects.get(beanName);
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
-			synchronized (this.singletonObjects) {
+			synchronized (this.singletonObjects) {//为啥不是双向锁定？
 				singletonObject = this.earlySingletonObjects.get(beanName);
 				if (singletonObject == null && allowEarlyReference) {
 					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
@@ -213,6 +221,10 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				if (logger.isDebugEnabled()) {
 					logger.debug("Creating shared instance of singleton bean '" + beanName + "'");
 				}
+				/**
+				 * 将beanName添加到singletonsCurrentlyInCreation这样一个集合中
+				 * 表示beanName对应的bean正在创建中
+				 */
 				beforeSingletonCreation(beanName);
 				boolean newSingleton = false;
 				boolean recordSuppressedExceptions = (this.suppressedExceptions == null);
@@ -220,6 +232,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					this.suppressedExceptions = new LinkedHashSet<>();
 				}
 				try {
+					//在这里创建bean 这里下一步是调用的是lambda表达式return createBean(beanName, mbd, args);
 					singletonObject = singletonFactory.getObject();
 					newSingleton = true;
 				}

@@ -139,7 +139,7 @@ class ConfigurationClassBeanDefinitionReader {
 		if (configClass.isImported()) {
 			registerBeanDefinitionForImportedConfigurationClass(configClass);
 		}
-		//处理所有加了@Bean的方法
+		//处理这个配置类里所有加了@Bean的方法
 		for (BeanMethod beanMethod : configClass.getBeanMethods()) {
 			loadBeanDefinitionsForBeanMethod(beanMethod);
 		}
@@ -218,10 +218,11 @@ class ConfigurationClassBeanDefinitionReader {
 		beanDef.setResource(configClass.getResource());
 		beanDef.setSource(this.sourceExtractor.extractSource(metadata, configClass.getResource()));
 
-		//静态的方法
+		//如果这个加了@Bean注解的方法是静态的方法
 		if (metadata.isStatic()) {
 			// static @Bean method
 			beanDef.setBeanClassName(configClass.getMetadata().getClassName());
+			//设置methoddName在AbstractAutowireCapableBeanFactory中生成bean的时候会根据这个
 			beanDef.setFactoryMethodName(methodName);
 		}
 		else {
