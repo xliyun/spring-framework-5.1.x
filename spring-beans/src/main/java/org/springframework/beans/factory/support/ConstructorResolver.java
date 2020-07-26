@@ -114,6 +114,12 @@ class ConstructorResolver {
 	 * or {@code null} if none (-> use constructor argument values from bean definition)
 	 * @return a BeanWrapper for the new instance
 	 */
+	/**
+	 * 我们要通过构造函数反射一个类，就需要
+	 * Constructor 构造函数
+	 * parameterType 参数类型
+	 * parameterValue 参数值
+	 */
 	public BeanWrapper autowireConstructor(String beanName, RootBeanDefinition mbd,
 			@Nullable Constructor<?>[] chosenCtors, @Nullable Object[] explicitArgs) {
 		//实例一个BeanWrapperImpl 对象很好理解
@@ -152,11 +158,12 @@ class ConstructorResolver {
 					}
 				}
 			}
+			//argsToResolve 参数解析器
 			if (argsToResolve != null) {
 				argsToUse = resolvePreparedArguments(beanName, mbd, bw, constructorToUse, argsToResolve, true);
 			}
 		}
-
+		//如果不存在已解析的构造方法或者 需要的参数
 		if (constructorToUse == null || argsToUse == null) {
 			// Take specified constructors, if any.
 			//如果没有已经解析的构造方法
@@ -205,7 +212,10 @@ class ConstructorResolver {
 			else {
 				//实例一个对象，用来存放构造方法的参数值
 				//当中主要存放了参数值和参数值所对应的下表
+				//获得的是通过mbd.getConstructorArgumentValues().addGenericArgumentValue("com.xliyun.spring.springioc.dao.IndexDao");设置的构造函数必须有的参数类型
 				ConstructorArgumentValues cargs = mbd.getConstructorArgumentValues();
+				//ConstrucorArgumentValues是存放构造方法的值的，有两种数据结构list(无序的参数) map(有序的参数)
+				//xml配置的bean里面构造函数<construct-arg index="0" value=""></construct-arg>
 				resolvedValues = new ConstructorArgumentValues();
 				/**
 				 * 确定构造方法参数数量,假设有如下配置：
@@ -280,8 +290,8 @@ class ConstructorResolver {
 							if (pnd != null) {
 								//获取构造方法参数名称列表
 								/**
-								 * 假设你有一个（String luban,Object zilu）
-								 * 则paramNames=[luban,zilu]
+								 * 假设你有一个（String xiaoliyu,Object zilu）
+								 * 则paramNames=[luban,xiaoliyu]
 								 */
 								paramNames = pnd.getParameterNames(candidate);
 							}
@@ -289,9 +299,15 @@ class ConstructorResolver {
 						//获取构造方法参数值列表
 						/**
 						 * 这个方法比较复杂
-						 * 因为spring只能提供字符串的参数值
+						 * 因为spring只能提供字符串的参数值，比如我们配置
+						 * paramNames是参数的名字
+						 *                  <bean id="luban" class="com.luban.Luban">
+						 * 				          <constructor-arg index="0" value="另一个bean的id,但是填在这里的是字符串，需要通过createArgumentArray转换"/>
+						 * 				     </bean>
+						 * 				     或者
+						 * 				     public void indexDao(String xiaoliyu)
 						 * 故而需要进行转换
-						 * argsHolder所包含的值就是转换之后的
+						 * argsHolder所包含的值就是xiaoliyun转换之后的对象
 						 */
 						argsHolder = createArgumentArray(beanName, mbd, resolvedValues, bw, paramTypes, paramNames,
 								getUserDeclaredConstructor(candidate), autowiring, candidates.length == 1);
@@ -343,10 +359,10 @@ class ConstructorResolver {
 						argsHolder.getTypeDifferenceWeight(paramTypes) : argsHolder.getAssignabilityWeight(paramTypes));
 				// Choose this constructor if it represents the closest match.
 				if (typeDiffWeight < minTypeDiffWeight) {
-					constructorToUse = candidate;
-					argsHolderToUse = argsHolder;
-					argsToUse = argsHolder.arguments;
-					minTypeDiffWeight = typeDiffWeight;
+					constructorToUse = candidate;//即将要用的构造方法
+					argsHolderToUse = argsHolder;//要使用的参数对象
+					argsToUse = argsHolder.arguments;//即将要用的参数
+					minTypeDiffWeight = typeDiffWeight;//最小参数 -1024
 					ambiguousConstructors = null;
 				}
 				else if (constructorToUse != null && typeDiffWeight == minTypeDiffWeight) {
@@ -395,6 +411,7 @@ class ConstructorResolver {
 		}
 
 		Assert.state(argsToUse != null, "Unresolved constructor arguments");
+		//instantiate()生成bean
 		bw.setBeanInstance(instantiate(beanName, mbd, constructorToUse, argsToUse));
 		return bw;
 	}
@@ -403,6 +420,10 @@ class ConstructorResolver {
 			String beanName, RootBeanDefinition mbd, Constructor<?> constructorToUse, Object[] argsToUse) {
 
 		try {
+			/*
+			 * 使用反射创建实例 lookup-method 通过CGLIB增强bean实例
+			 */
+			//strategy是生成策略
 			InstantiationStrategy strategy = this.beanFactory.getInstantiationStrategy();
 			if (System.getSecurityManager() != null) {
 				return AccessController.doPrivileged((PrivilegedAction<Object>) () ->
