@@ -1705,13 +1705,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		// If it's a FactoryBean, we use it to create a bean instance, unless the
 		// caller actually wants a reference to the factory.
 		// 现在可以确定的是，这个bean实例，要么是个正常bean，要么是个FactoryBean
-		// 这两个判断条件
-		//第一个是说如果这个bean实例不是FactoryBean，就直接返回beanInstance,因为不是FactoryBean那肯定就是正常的bean了
-		//第二个是说，如果本来期望返回的就是FactoryBean，那么也可以就直接返回了
+		// 所以下面if的两个判断
+		//第一个判断如果这个bean实例不是FactoryBean，就直接返回beanInstance,因为不是FactoryBean那肯定就是正常的bean了
+		//第二个判断，name是&开头，希望获取的是FactoryBean，那么也可以就直接返回了
 		if (!(beanInstance instanceof FactoryBean) || BeanFactoryUtils.isFactoryDereference(name)) {
 			return beanInstance;
 		}
-
+		//经过上面的判断，到这里的只会是beanInstance是FactoryBean，但是name不是&开头
 		Object object = null;
 		if (mbd == null) {
 			//尝试从缓存中取bean

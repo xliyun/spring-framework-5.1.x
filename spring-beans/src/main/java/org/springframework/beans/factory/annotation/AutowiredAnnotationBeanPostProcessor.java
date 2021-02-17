@@ -351,7 +351,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 								}
 								requiredConstructor = candidate;
 							}
-							//如果当前构造函数加了注解，@AutoWired(requred=false)或者@AutoWired(required=true)都会加入进去
+							//如果当前构造函数加了注解，就会先放到candidates当中，就是@AutoWired(requred=false)或者@AutoWired(required=true)都会加入进去
 							candidates.add(candidate);
 						}
 						//若没有注解，再判断构造函数上的参数个数是否为0
@@ -364,7 +364,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 					 * 将所有加了@AutoWired
 					 *
 					 */
-					//构造函数头上有@AutoWired注解（此构造函数有注解）
+					//构造函数头上有注解（此构造函数有注解），candidates放的是有注解的情况和默认构造函数
 					//这里最终的逻辑是，如果有requried=true的构造函数，返回requried = true的构造函数，如果没有required=true的函数，有无参构造函数，返回无参构造函数
 					if (!candidates.isEmpty()) {
 						// Add default constructor to list of optional constructors, as fallback.
@@ -386,6 +386,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 						//如果有required=true的构造函数直接加入，或者没有required=true,有默认构造函数
 						candidateConstructors = candidates.toArray(new Constructor<?>[0]);
 					}
+					//===剩下的是没有注解的情况
 					//如果bean的构造函数只有一个，并且这个构造函数的参数大于0
 					else if (rawCandidates.length == 1 && rawCandidates[0].getParameterCount() > 0) {
 						candidateConstructors = new Constructor<?>[] {rawCandidates[0]};
