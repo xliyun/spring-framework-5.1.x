@@ -297,7 +297,7 @@ class ConfigurationClassParser {
 				// The config class is annotated with @ComponentScan -> perform the scan immediately
 				Set<BeanDefinitionHolder> scannedBeanDefinitions =
 						//这里是去扫描包调用doScan方法,这个方法最后return的是doScan方法,返回的set是我们所有扫描出来的对象Set<BeanDefinitionHolder>
-						//这里把这个方法当做黑箱，就是扫描出所有的bean来理解就行
+						//这里把这个方法当做黑箱，就是扫描出所有的bean放到beanDefinitionMap来理解就行
 						//并且里面的doSan方法通过registerBeanDefinition(definitionHolder, this.registry);注册了所有扫出来的bean
 						this.componentScanParser.parse(componentScan, sourceClass.getMetadata().getClassName());
 				// Check the set of scanned definitions for any further config classes and parse recursively if needed
@@ -343,7 +343,7 @@ class ConfigurationClassParser {
 		 * 总之就是一句话，@Import(xxx.class)，那么这个类就会被解析
 		 * 如果xxx是selector的那么他当中返回的类虽然没有直接加上@Import，但是也会直接解析
 		 */
-		/**终极理解
+		/**终极理解基于下面的processImports(configClass, sourceClass, getImports(sourceClass), true);
 		 * 就是说，第一次调用processImports，configClass就是我们的配置类AppCofig.class,
 		 * sourceClass就是我们@Import里的值，也就是xxx.class，
 		 * getImports(sourceCLass)是判断@Import的值是哪一种@Import，然后再进行处理

@@ -73,7 +73,7 @@ class ComponentScanAnnotationParser {
 	}
 
 
-	public Set<BeanDefinitionHolder> 	parse(AnnotationAttributes componentScan, final String declaringClass) {
+	public Set<BeanDefinitionHolder> parse(AnnotationAttributes componentScan, final String declaringClass) {
 		//这个方法最后return 的是doScan方法,返回的set是我们所有扫描出来的对象
 		//判断有没有设置外部的bean生成器
 		ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(this.registry,

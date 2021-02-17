@@ -68,12 +68,13 @@ final class PostProcessorRegistrationDelegate {
 			List<BeanFactoryPostProcessor> regularPostProcessors = new ArrayList<>(); //放程序员手动annotationConfigApplicationContext.addBeanFactoryPostProcessor(new MyBeanFactoryProcessorByHand());的
 			List<BeanDefinitionRegistryPostProcessor> registryProcessors = new ArrayList<>();
 
-			//将传递进来的beanFactoryPostProcessors按照实现父类接口还是子类接口分别放到两个list当中
+			//将传递进来的beanFactoryPostProcessors按照实现父类接口还是子类接口分别放到两个list当中，第一次执行不走这里！！（这里需要手动注册的，不加注解的）
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
 				//MyBeanFactoryProcessorByHand implements BeanFactoryPostProcessor 所以不走这个
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
 					BeanDefinitionRegistryPostProcessor registryProcessor =
 							(BeanDefinitionRegistryPostProcessor) postProcessor;
+					//BeanDefinitionRegistryPostProcessor比父接口BeanFactoryPostProcessor多了一个postProcessBeanDefinitionRegistry()方法给执行掉
 					registryProcessor.postProcessBeanDefinitionRegistry(registry);
 					registryProcessors.add(registryProcessor);
 				}
@@ -94,13 +95,13 @@ final class PostProcessorRegistrationDelegate {
 			// First, invoke the BeanDefinitionRegistryPostProcessors that implement PriorityOrdered.
 			String[] postProcessorNames =
 					//这个方法是根据提供的bd.class返回beanName
-					//这里会返回ConfigurationClassPostProcessor
+					//这里帮助后面返回ConfigurationClassPostProcessor（第一次执行是org.springframework.context.annotation.internalConfigurationAnnotationProcessor）
 					beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 			/**
 			 * 这个地方可以得到一个BeanFactoryPostPreocessor,因为是spring默认在最开始的时候注册的
 			 * 为什么要在最开始注册这个呢？
 			 * 因为spring的工厂需要去解析去扫描等等功能
-			 * 而这些功能都是需要在sprign工厂初始化之前执行
+			 * 而这些功能都是需要在spring工厂初始化之前执行
 			 * 要么在工厂最开始的时候、要么在工厂初始化之中，反正不能在之后
 			 * 因为如果在之后就没有意义，因为那个时候已经需要使用工厂了
 			 * 所以这里spring在一开始就注册了一个BeanFactoryPostProcessor,用来插手springfactory实例化过程
@@ -109,17 +110,17 @@ final class PostProcessorRegistrationDelegate {
 			 */
 			for (String ppName : postProcessorNames) {
 				if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
-					//从beanFactory当中把ConfigurationClassPostProcessor拿出来
+					//从beanFactory当中把ConfigurationClassPostProcessor拿出来，
 					currentRegistryProcessors.add(beanFactory.getBean(ppName, BeanDefinitionRegistryPostProcessor.class));
 					processedBeans.add(ppName);
 				}
 			}
-			//排序不重要，况且currentRegistryProcessors只有一个数据
+			//排序不重要，这里第一次执行只会拿到org.springframework.context.annotation.ConfigurationClassPostProcessor
 			sortPostProcessors(currentRegistryProcessors, beanFactory);
-			//合并list不重要，就是把spring默认的合并到自己的
+			//合并list不重要，就是把spring默认的合并到自己注册的
 			registryProcessors.addAll(currentRegistryProcessors);
 			//循环调用BeanDefinitionRegistryPostProcessor的postProcessBeanDefinitionRegistry方法
-			//最重要，因为这个方法就是调用执行所有的BeanDefinitionRegistryPostProcessor
+			//！！！！最重要，因为这个方法就是调用执行所有的BeanDefinitionRegistryPostProcessor 执行的是ConfigurationClassPostProcessor扫描包的过程//BeanDefinitionRegistryPostProcessor比父接口BeanFactoryPostProcessor多了一个postProcessBeanDefinitionRegistry()方法给执行掉
 			invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
 			//执行完了所有的BeanDefinitionRegistryPostProcessor
 			//这个list只是一个临时变量，用完了，所以要清除
