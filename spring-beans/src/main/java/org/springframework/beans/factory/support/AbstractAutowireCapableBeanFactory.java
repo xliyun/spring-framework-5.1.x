@@ -608,6 +608,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			//把bean从DefaultSingletonBeanRegistry.earlySingletonObjects中移除
 			//将bean放进三级缓存
 			//如果允许代理，这里返回的是获取代理对象的入口
+			//比如在getEarlyBeanReference()里可以实现AOP的逻辑~~~  参考自动代理创建器AbstractAutoProxyCreator  实现了这个方法来创建代理对象
 			addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
 		}
 

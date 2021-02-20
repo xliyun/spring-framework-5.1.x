@@ -354,6 +354,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 							//如果当前构造函数加了注解，就会先放到candidates当中，就是@AutoWired(requred=false)或者@AutoWired(required=true)都会加入进去
 							candidates.add(candidate);
 						}
+						//就是把无参构造函数找出来
 						//若没有注解，再判断构造函数上的参数个数是否为0
 						//当某个构造函数的参数是0个，也就是无参构造函数，赋值给defaultConstructor
 						else if (candidate.getParameterCount() == 0) {
